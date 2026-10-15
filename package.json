@@ -1,0 +1,26 @@
+{
+  "name": "ai-smart-blind-stick-monorepo",
+  "version": "1.0.0",
+  "description": "Full-stack AI Smart Blind Stick project (NOVOS)",
+  "scripts": {
+    "dev": "concurrently \"npm run server:dev\" \"npm run client:dev\"",
+    "dev:client": "npm --prefix client run dev",
+    "dev:server": "npm --prefix server run dev",
+    "client:dev": "npm --prefix client run dev",
+    "server:dev": "npm --prefix server run dev",
+    "build": "npm --prefix client run build",
+    "build:client": "npm --prefix client run build",
+    "build:server": "npm --prefix server run build",
+    "install:all": "npm install && npm --prefix client install && npm --prefix server install",
+    "server": "npm --prefix server start",
+    "client:preview": "npm --prefix client run preview",
+    "inference": "node scripts/run-inference.js"
+  },
+  "workspaces": [
+    "client",
+    "server"
+  ],
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}
