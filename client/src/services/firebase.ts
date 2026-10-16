@@ -8,7 +8,6 @@ import {
   update, 
   get, 
   onValue, 
-  off, 
   serverTimestamp as rtdbServerTimestamp 
 } from 'firebase/database';
 import { DeviceTelemetryData } from '../types';
@@ -67,7 +66,7 @@ export function subscribeToDeviceData(
   callback: (data: DeviceTelemetryData | null) => void,
   onError?: (error: Error) => void
 ): () => void {
-  const listener = onValue(
+  const unsubscribe = onValue(
     deviceRef,
     (snapshot) => {
       if (snapshot.exists()) {
@@ -85,9 +84,7 @@ export function subscribeToDeviceData(
   );
 
   // Return unsubscribe cleanup function
-  return () => {
-    off(deviceRef, 'value', listener);
-  };
+  return unsubscribe;
 }
 
 /**
