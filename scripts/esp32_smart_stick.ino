@@ -25,9 +25,9 @@ const char* WIFI_SSID     = "YOUR_WIFI_SSID";
 const char* WIFI_PASSWORD = "YOUR_WIFI_PASSWORD";
 
 // 2. Firebase Realtime Database Configuration
-// Replace with the exact URL shown at the top of Firebase Console > Realtime Database > Data tab:
-const char* FIREBASE_HOST = "https://nexus-smart-blind-stick-default-rtdb.firebaseio.com";
-// If you enabled database secrets or auth tokens, specify here (or leave empty if using open rules during testing)
+// Live active Realtime Database for Smart Blind Stick Nexus:
+const char* FIREBASE_HOST = "https://smart-blind-stick-nexus08-default-rtdb.firebaseio.com";
+// If you enabled database secrets or auth tokens, specify here (or leave empty when using /device rules)
 const char* FIREBASE_AUTH = ""; 
 
 // 3. Pin Definitions (HC-SR04 Ultrasonic Sonar Sensors)

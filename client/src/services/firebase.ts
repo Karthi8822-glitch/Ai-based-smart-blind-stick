@@ -18,14 +18,14 @@ import { DeviceTelemetryData } from '../types';
  * NOTE: Only client-safe public keys are included. NEVER expose Service Account Private Keys here.
  */
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyDIX7BLpqm_fbckfNAyk6VJiSNPnF0Moek',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'nexus-smart-blind-stick.firebaseapp.com',
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || 'https://nexus-smart-blind-stick-default-rtdb.firebaseio.com',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'nexus-smart-blind-stick',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'nexus-smart-blind-stick.firebasestorage.app',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '358098381158',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:358098381158:web:0d69b8750108e55f9fc0a7',
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || 'G-TMTPDCKR2W'
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || 'AIzaSyAqRb83KqVQtLWAl0aKKyL0SUUuTa3MMcI',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || 'smart-blind-stick-nexus08.firebaseapp.com',
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || 'https://smart-blind-stick-nexus08-default-rtdb.firebaseio.com',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || 'smart-blind-stick-nexus08',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || 'smart-blind-stick-nexus08.firebasestorage.app',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '286022048041',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '1:286022048041:web:c47618d76763baa055bf38',
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || ''
 };
 
 // Initialize or reuse Firebase App singleton instance

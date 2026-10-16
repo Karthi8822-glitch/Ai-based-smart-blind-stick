@@ -1,0 +1,8 @@
+{
+  "rules": {
+    "device": {
+      ".read": true,
+      ".write": true
+    }
+  }
+}
