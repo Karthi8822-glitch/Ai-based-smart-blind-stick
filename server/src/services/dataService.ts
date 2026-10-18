@@ -242,24 +242,29 @@ export const dataService = {
     if (supabase && isSupabaseConnected()) {
       try {
         const { data, error } = await supabase
-          .from('sensor_data')
+          .from('live_sensor_data')
           .select('*')
           .eq('device_id', formattedId)
-          .order('timestamp', { ascending: false })
-          .limit(1)
           .maybeSingle();
 
         if (data) {
+          const frontM = Number((data.front_distance_cm / 100).toFixed(2));
+          const leftM = Number((data.left_distance_cm / 100).toFixed(2));
+          const rightM = Number((data.right_distance_cm / 100).toFixed(2));
+
           return {
             id: data.id,
             deviceId: data.device_id,
-            distance: Number(data.distance),
-            object: data.object,
-            confidence: Number(data.confidence),
-            latitude: Number(data.latitude),
-            longitude: Number(data.longitude),
-            battery: Number(data.battery),
-            alert: data.alert,
+            distance: frontM,
+            frontDistance: frontM,
+            leftDistance: leftM,
+            rightDistance: rightM,
+            object: data.obstacle_level || 'clear',
+            confidence: 0.98,
+            latitude: Number(data.gps_latitude),
+            longitude: Number(data.gps_longitude),
+            battery: Number(data.battery_percentage),
+            alert: data.alert_state,
             timestamp: data.timestamp,
           };
         }
@@ -292,47 +297,67 @@ export const dataService = {
     // 1. Supabase Postgres
     if (supabase && isSupabaseConnected()) {
       try {
-        const row = {
-          device_id: formattedId,
-          distance: Number(data.distance),
-          object: data.object,
-          confidence: data.confidence !== undefined ? Number(data.confidence) : 0.95,
-          latitude: data.latitude !== undefined ? Number(data.latitude) : 11.0168,
-          longitude: data.longitude !== undefined ? Number(data.longitude) : 76.9558,
-          battery: data.battery !== undefined ? Number(data.battery) : 82,
-          alert: data.alert || 'none',
-          timestamp: timestamp.toISOString(),
-        };
+        const frontCm = data.front_distance_cm ?? (data.distance !== undefined ? Number(data.distance) * 100 : 180);
+        const leftCm = data.left_distance_cm ?? 150;
+        const rightCm = data.right_distance_cm ?? 160;
+        const obstacleLevel = data.obstacle_level || data.object || (frontCm < 60 ? 'critical' : frontCm < 120 ? 'warning' : 'clear');
+        const alertState = data.alert || data.alert_state || (frontCm < 60 ? 'dual' : frontCm < 120 ? 'vibration' : 'none');
+        const nowIso = timestamp.toISOString();
 
-        const { data: inserted, error } = await supabase
-          .from('sensor_data')
-          .insert(row)
-          .select()
-          .single();
+        await supabase
+          .from('live_sensor_data')
+          .upsert({
+            device_id: formattedId,
+            front_distance_cm: frontCm,
+            left_distance_cm: leftCm,
+            right_distance_cm: rightCm,
+            obstacle_level: obstacleLevel,
+            gps_latitude: data.latitude !== undefined ? Number(data.latitude) : 11.0168,
+            gps_longitude: data.longitude !== undefined ? Number(data.longitude) : 76.9558,
+            battery_percentage: data.battery !== undefined ? Number(data.battery) : 85,
+            alert_state: alertState,
+            timestamp: nowIso,
+            updated_at: nowIso,
+          }, { onConflict: 'device_id' });
 
-        // Update device last_seen and battery level
+        await supabase
+          .from('sensor_history')
+          .insert({
+            device_id: formattedId,
+            front_distance_cm: frontCm,
+            left_distance_cm: leftCm,
+            right_distance_cm: rightCm,
+            obstacle_level: obstacleLevel,
+            gps_latitude: data.latitude !== undefined ? Number(data.latitude) : 11.0168,
+            gps_longitude: data.longitude !== undefined ? Number(data.longitude) : 76.9558,
+            battery_percentage: data.battery !== undefined ? Number(data.battery) : 85,
+            timestamp: nowIso,
+          });
+
         await supabase
           .from('devices')
           .update({
-            last_seen: new Date().toISOString(),
-            battery_level: row.battery,
+            status: 'online',
+            last_seen: nowIso,
+            battery_level: data.battery !== undefined ? Number(data.battery) : 85,
+            updated_at: nowIso,
           })
           .eq('device_id', formattedId);
 
-        if (inserted) {
-          return {
-            id: inserted.id,
-            deviceId: inserted.device_id,
-            distance: Number(inserted.distance),
-            object: inserted.object,
-            confidence: Number(inserted.confidence),
-            latitude: Number(inserted.latitude),
-            longitude: Number(inserted.longitude),
-            battery: Number(inserted.battery),
-            alert: inserted.alert,
-            timestamp: inserted.timestamp,
-          };
-        }
+        return {
+          deviceId: formattedId,
+          distance: Number((frontCm / 100).toFixed(2)),
+          frontDistance: Number((frontCm / 100).toFixed(2)),
+          leftDistance: Number((leftCm / 100).toFixed(2)),
+          rightDistance: Number((rightCm / 100).toFixed(2)),
+          object: obstacleLevel,
+          confidence: 0.98,
+          latitude: data.latitude !== undefined ? Number(data.latitude) : 11.0168,
+          longitude: data.longitude !== undefined ? Number(data.longitude) : 76.9558,
+          battery: data.battery !== undefined ? Number(data.battery) : 85,
+          alert: alertState,
+          timestamp: nowIso,
+        };
       } catch (err: any) {
         console.warn('[dataService] Supabase saveSensorData error:', err.message);
       }

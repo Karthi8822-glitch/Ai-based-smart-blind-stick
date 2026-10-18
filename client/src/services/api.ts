@@ -476,4 +476,17 @@ export const api = {
       };
     }
   },
+
+  async getLatestVisionDetection(deviceId: string = 'nexus-01'): Promise<{
+    success: boolean;
+    data: any;
+  }> {
+    try {
+      const res = await fetch(`${API_BASE_URL}/vision/latest?deviceId=${encodeURIComponent(deviceId)}`);
+      if (!res.ok) throw new Error('API fetch failed');
+      return await res.json();
+    } catch {
+      return { success: false, data: null };
+    }
+  },
 };

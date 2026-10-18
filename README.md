@@ -264,6 +264,32 @@ Navigate to the **Edge Neural Perception** section (`#ai-vision`) on `http://loc
 
 ---
 
+## 📷 AI Camera Integration & ESP32-CAM Architecture
+
+The Nexus AI Smart Blind Stick integrates an **AI-Thinker ESP32-CAM (OV2640 2MP sensor)** running custom firmware (`scripts/esp32_cam_nexus_ai.ino`) that captures JPEG frames and transmits them securely to the Nexus backend for computer vision inference.
+
+```mermaid
+graph LR
+    CAM[ESP32-CAM OV2640] -- "HTTP POST /api/vision/capture (JPEG)" --> SVR[Nexus Node.js API]
+    SVR -- "1. Validate Magic Bytes & Size" --> VAL[Image Validator]
+    SVR -- "2. Multi-tier Inference" --> INF[Inference Engine]
+    INF -- "Tier 1: Local YOLO" --> YOLO[Ultralytics Python .pt/.onnx]
+    INF -- "Tier 2: Roboflow Cloud" --> RF[Roboflow Serverless API]
+    SVR -- "3. Store Private Frame" --> STG[(Supabase Storage: nexus-camera-frames)]
+    SVR -- "4. Record Detection" --> DB[(Supabase DB: ai_detections)]
+    SVR -- "5. Update Camera Online" --> LVE[(Supabase DB: live_sensor_data)]
+    DB -- "Realtime Broadcast" --> DASH[Nexus Web Dashboard]
+```
+
+### Key Security & Robustness Features
+1. **Device Authentication**: Enforces `x-device-id` and `x-device-key` headers matching `DEVICE_INGEST_KEY`.
+2. **Strict Validation**: Inspects file magic bytes (JPEG `0xFF 0xD8 0xFF`, PNG `0x89 0x50 0x4E 0x47`, WebP `RIFF...WEBP`) and checks dimensions (64x64 to 4096x4096) with a strict 5MB upload limit.
+3. **Inference Timeouts**: 15-second AbortController timeout prevents slow models from hanging hardware connections.
+4. **Private Storage Retention**: Uploads raw frames to the private Supabase bucket `nexus-camera-frames`, issuing temporary signed URLs (3600s) for viewing in the dashboard.
+5. **No Fabricated Detections**: Status is marked `online` only when an authenticated frame was received in the last 30 seconds (`isCameraVerifiedOnline`). Unverified states show as `STANDBY / OFFLINE`.
+
+---
+
 ## ⚙️ Environment Variables
 
 ### Server (`server/.env`)
@@ -274,13 +300,53 @@ MONGODB_URI=mongodb://localhost:27017/smart-blind-stick
 JWT_SECRET=novos_ai_smart_blind_stick_secure_key_2026_jwt_token
 JWT_EXPIRES_IN=7d
 CORS_ORIGIN=*
-DEFAULT_DEVICE_ID=SBS-001
+DEFAULT_DEVICE_ID=nexus-01
+DEVICE_INGEST_KEY=nexus-sbs-device-credential-token
+
+# Roboflow Computer Vision
+ROBOFLOW_API_KEY=zMRTKGJi7FR4h3ibIC08
+ROBOFLOW_MODEL_ID=pedestrian-viewer/4
+
+# Supabase Cloud Database & Storage
+SUPABASE_URL=https://fddbbkssiforahktwcnp.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 ### Client (`client/.env`)
 ```ini
 VITE_API_URL=http://localhost:5001/api
+VITE_SERVER_URL=http://localhost:5001
+VITE_SUPABASE_URL=https://fddbbkssiforahktwcnp.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_eCu2svQDFV71vi4D4QBuDg_PVDf-wPT
 ```
+
+---
+
+## 🚀 End-to-End Testing
+
+### 1. Test Ingestion via cURL
+```bash
+# Capture and analyze local frame 3.jpg
+curl -X POST \
+  -H "x-device-id: nexus-01" \
+  -H "x-device-key: nexus-sbs-device-credential-token" \
+  -H "Content-Type: image/jpeg" \
+  --data-binary @3.jpg \
+  http://localhost:5001/api/vision/capture
+```
+
+### 2. Verify Database Ingestion
+```bash
+# Retrieve latest verified AI detection and signed frame URL
+curl "http://localhost:5001/api/vision/latest?deviceId=nexus-01"
+```
+
+### 3. ESP32-CAM Firmware Upload
+1. Open `scripts/esp32_cam_nexus_ai.ino` in the Arduino IDE.
+2. Select Board: `AI Thinker ESP32-CAM` (Tools -> Board -> ESP32 Arduino -> AI Thinker ESP32-CAM).
+3. Set your WiFi credentials (`WIFI_SSID` & `WIFI_PASSWORD`) and backend IP (`SERVER_HOST`).
+4. Connect GPIO 0 to GND, press Reset to enter flash mode, and upload.
+5. Disconnect GPIO 0 from GND and press Reset to boot into continuous AI vision capture loop.
 
 ---
 

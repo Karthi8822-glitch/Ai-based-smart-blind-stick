@@ -1,9 +1,15 @@
+export type ConnectionState = 'loading' | 'connected' | 'disconnected' | 'stale' | 'error' | 'empty';
+
 export interface SensorDataPayload {
   deviceId: string;
-  distance: number | null; // in meters (e.g. 1.8), null when disconnected
-  leftDistance?: number | null;
-  rightDistance?: number | null;
-  frontDistance?: number | null;
+  distance: number | null; // in centimetres (e.g. 185 cm), null when disconnected
+  leftDistance?: number | null; // in cm
+  rightDistance?: number | null; // in cm
+  frontDistance?: number | null; // in cm
+  distanceCm?: number | null;
+  leftDistanceCm?: number | null;
+  rightDistanceCm?: number | null;
+  frontDistanceCm?: number | null;
   object: string; // e.g. "person", "chair", "wall", "stairs", "bicycle", "none"
   confidence: number; // 0 to 1 (e.g. 0.97)
   latitude: number | null;
@@ -16,6 +22,7 @@ export interface SensorDataPayload {
   battery: number | null; // percentage 0 - 100, null when disconnected
   alert: 'none' | 'vibration' | 'buzzer' | 'dual' | string;
   timestamp?: string | Date;
+  isStale?: boolean;
 }
 
 export interface DeviceTelemetryData {
