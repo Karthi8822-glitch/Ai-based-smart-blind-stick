@@ -259,7 +259,7 @@ export const sendTelemetryToEdgeFunction = async (payload: {
     headers: {
       'Content-Type': 'application/json',
       'x-device-id': payload.deviceId,
-      'x-device-key': payload.deviceKey || 'nexus-sbs-device-credential-token',
+      'x-device-key': payload.deviceKey || '',
     },
     body: JSON.stringify(payload),
   });
@@ -363,14 +363,16 @@ export const subscribeToSupabaseAIDetections = (
 export const sendCameraFrameCapture = async (
   imageBlobOrBase64: Blob | string,
   deviceId: string = DEFAULT_DEVICE_ID,
-  deviceKey: string = 'nexus-sbs-device-credential-token'
+  deviceKey?: string
 ) => {
   const serverUrl = import.meta.env.VITE_SERVER_URL || 'http://localhost:5001';
   let body: any;
   let headers: Record<string, string> = {
     'x-device-id': deviceId,
-    'x-device-key': deviceKey,
   };
+  if (deviceKey) {
+    headers['x-device-key'] = deviceKey;
+  }
 
   if (typeof imageBlobOrBase64 === 'string') {
     headers['Content-Type'] = 'application/json';
